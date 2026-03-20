@@ -1,0 +1,39 @@
+.error-banner {
+  position: fixed;
+  top: 70px;
+  left: 0;
+  right: 0;
+  z-index: 150;
+  padding: 0;
+  animation: slide-in-top 0.3s var(--ease-spring);
+}
+
+@keyframes slide-in-top {
+  from { transform: translateY(-100%); opacity: 0; }
+  to   { transform: translateY(0);     opacity: 1; }
+}
+
+.error-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 24px;
+  background: var(--danger-subtle);
+  border-bottom: 1px solid rgba(240,69,90,0.25);
+  color: var(--danger);
+}
+
+.error-msg {
+  flex: 1;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.error-close {
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  color: var(--danger);
+  opacity: 0.7;
+  transition: opacity var(--transition);
+}
+.error-close:hover { opacity: 1; }
