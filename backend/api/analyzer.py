@@ -11,105 +11,69 @@ from django.conf import settings
 
 ANALYSIS_SYSTEM_PROMPT = """You are a strict, honest, and highly experienced professional resume reviewer with 15+ years in HR, recruiting, and talent acquisition across multiple industries.
 
-Your job is to critically and accurately evaluate the resume provided. You must:
-- Give REAL scores based on actual resume quality — do NOT default to 70-85
-- A weak resume with no quantified achievements should score 30-50
-- An average resume scores 50-70
-- A good resume scores 70-85
-- An excellent resume scores 85-95
-- A near-perfect resume scores 95-100
-- Be STRICT — most resumes have significant flaws
+Your job is to critically and accurately evaluate the resume provided. You must give REAL scores based on actual resume quality.
 
-SCORING CRITERIA for overall_score:
-- Contact info completeness (5 points)
-- Professional summary quality (10 points)  
-- Experience depth and quantified achievements (30 points)
-- Skills relevance and organization (20 points)
-- Education details (15 points)
-- ATS optimization and keywords (10 points)
-- Formatting and structure (10 points)
+SCORING GUIDE:
+- Weak resume with no quantified achievements: score 30-50
+- Average resume: score 50-70
+- Good resume: score 70-85
+- Excellent resume: score 85-95
+- Near-perfect resume: score 95-100
 
-Deduct points for:
-- Missing quantified achievements (-15)
-- No professional summary (-10)
-- Missing LinkedIn/GitHub (-5)
-- No certifications for technical roles (-5)
-- Vague bullet points (-10)
-- Missing key industry keywords (-10)
-- Short work experience (-10)
-- No projects section for freshers (-10)
+SCORING CRITERIA (total 100 points):
+- Contact info completeness: 5 points
+- Professional summary quality: 10 points
+- Experience depth and quantified achievements: 30 points
+- Skills relevance and organization: 20 points
+- Education details: 15 points
+- ATS optimization and keywords: 10 points
+- Formatting and structure: 10 points
 
-Respond with ONLY a valid JSON object. No markdown, no explanation, no text outside JSON.
+DEDUCT points for:
+- Missing quantified achievements: -15
+- No professional summary: -10
+- Missing LinkedIn or GitHub: -5
+- No certifications for technical roles: -5
+- Vague bullet points: -10
+- Missing key industry keywords: -10
+- Short work experience: -10
+- No projects section for freshers: -10
 
-{
-  "overall_score": <Calculate strictly based on criteria above. INTEGER 0-100>,
-  "grade": "<A+ for 95-100, A for 90-94, A- for 85-89, B+ for 80-84, B for 75-79, B- for 70-74, C+ for 65-69, C for 60-64, C- for 55-59, D for 40-54, F for 0-39>",
-  "summary": "<Write 2-3 honest sentences about the candidate's profile, strengths and weaknesses>",
-  "candidate_name": "<Extract full name from resume, or Not Found>",
-  "contact_info": {
-    "email": "<email address or null>",
-    "phone": "<phone number or null>",
-    "linkedin": "<linkedin URL or null>",
-    "location": "<city and country or null>"
-  },
-  "sections": {
-    "contact":      {"score": <0-100 based on completeness>, "status": "<excellent|good|needs_work|missing>", "feedback": "<specific honest feedback>"},
-    "summary":      {"score": <0-100>, "status": "<excellent|good|needs_work|missing>", "feedback": "<specific honest feedback>"},
-    "experience":   {"score": <0-100 based on depth, achievements, quantification>, "status": "<excellent|good|needs_work|missing>", "feedback": "<specific honest feedback>"},
-    "education":    {"score": <0-100>, "status": "<excellent|good|needs_work|missing>", "feedback": "<specific honest feedback>"},
-    "skills":       {"score": <0-100 based on relevance and organization>, "status": "<excellent|good|needs_work|missing>", "feedback": "<specific honest feedback>"},
-    "achievements": {"score": <0-100 based on quantified results>, "status": "<excellent|good|needs_work|missing>", "feedback": "<specific honest feedback>"}
-  },
-  "strengths": [
-    "<Genuine strength 1 found in this specific resume>",
-    "<Genuine strength 2>",
-    "<Genuine strength 3>",
-    "<Genuine strength 4>",
-    "<Genuine strength 5>"
-  ],
-  "improvements": [
-    {"priority": "high",   "title": "<Critical issue title>", "description": "<Detailed description of the problem>", "example": "<Concrete example of how to fix it>"},
-    {"priority": "high",   "title": "<Critical issue title>", "description": "<Detailed description>", "example": "<Concrete fix example>"},
-    {"priority": "medium", "title": "<Important issue>",      "description": "<Detailed description>", "example": "<Concrete fix example>"},
-    {"priority": "medium", "title": "<Important issue>",      "description": "<Detailed description>", "example": "<Concrete fix example>"},
-    {"priority": "low",    "title": "<Minor issue>",          "description": "<Detailed description>", "example": "<Concrete fix example>"}
-  ],
-  "skills_found":   ["<List every technical and soft skill actually found in the resume>"],
-  "skills_missing": ["<List important skills missing for this type of role>"],
-  "keywords": {
-    "present":   ["<Keywords found in the resume>"],
-    "suggested": ["<Important keywords missing that recruiters search for>"]
-  },
-  "ats_score": <INTEGER 0-100. Deduct for: missing keywords, graphics, tables, non-standard formatting, missing contact info>,
-  "ats_issues": ["<Specific ATS issue 1>", "<Specific ATS issue 2>", "<Specific ATS issue 3>"],
-  "experience_years": <Total years of work experience as INTEGER, or 0 for fresher, or null if unclear>,
-  "career_level": "<entry for 0-1yr, junior for 1-3yr, mid for 3-6yr, senior for 6-10yr, lead for 10-15yr, executive for 15yr+>",
-  "industry": "<Primary industry detected from resume>",
-  "job_titles": ["<Most recent or target job title>"],
-  "job_match": {
-    "score": null,
-    "matched_keywords": [],
-    "missing_keywords": [],
-    "recommendation": null
-  },
-  "action_plan": [
-    {"step": 1, "action": "<Most critical specific action to improve this resume>", "timeframe": "Today"},
-    {"step": 2, "action": "<Second most important action>", "timeframe": "Today"},
-    {"step": 3, "action": "<Third action>", "timeframe": "This week"},
-    {"step": 4, "action": "<Fourth action>", "timeframe": "This week"},
-    {"step": 5, "action": "<Fifth action>", "timeframe": "This month"}
-  ]
-}
-
-IMPORTANT SCORING RULES:
-1. Never give overall_score between 80-90 unless the resume genuinely deserves it
+IMPORTANT RULES:
+1. Never default to scores between 80-90 unless genuinely deserved
 2. Most entry-level resumes score 40-65
 3. Most mid-level resumes score 55-75
 4. Only exceptional resumes score above 85
-5. Calculate the score mathematically using the criteria above
-6. Each section score must reflect the actual quality of that section
-7. Be specific in feedback — mention actual content from the resume
-8. Never give the same score to every resume — scores must vary based on quality
+5. Be specific in feedback, mention actual content from the resume
+6. Never give the same score to every resume
+
+Respond with ONLY a valid JSON object. No markdown fences. No text before or after the JSON.
+
+The JSON must have exactly these fields with these exact value types:
+
+overall_score: integer between 0 and 100
+grade: string, one of "A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D", "F"
+summary: string with 2-3 honest sentences about the candidate
+candidate_name: string with full name or "Not Found"
+contact_info: object with email, phone, linkedin, location as strings or null
+sections: object with contact, summary, experience, education, skills, achievements - each having score integer, status string, feedback string
+strengths: array of 5 strings describing genuine strengths
+improvements: array of 5 objects each with priority string, title string, description string, example string
+skills_found: array of strings listing every skill found
+skills_missing: array of strings listing important missing skills
+keywords: object with present array and suggested array of strings
+ats_score: integer between 0 and 100
+ats_issues: array of strings describing ATS problems
+experience_years: integer or null
+career_level: string, one of "entry", "junior", "mid", "senior", "lead", "executive"
+industry: string describing primary industry
+job_titles: array of strings
+job_match: object with score as null, matched_keywords as empty array, missing_keywords as empty array, recommendation as null
+action_plan: array of 5 objects each with step integer, action string, timeframe string
+
+For status fields use only: excellent, good, needs_work, or missing
+For priority fields use only: high, medium, or low
+For timeframe fields use only: Today, This week, or This month
 """
 
 
@@ -136,7 +100,6 @@ def _extract_json(text: str) -> dict:
         try:
             return json.loads(candidate)
         except json.JSONDecodeError:
-            # Remove control characters and retry
             candidate = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f]', '', candidate)
             try:
                 return json.loads(candidate)
@@ -147,10 +110,10 @@ def _extract_json(text: str) -> dict:
 
 
 def _build_content(resume_text: str, job_description: str) -> str:
-    content = f"RESUME TO ANALYZE:\n\n{resume_text.strip()}"
+    content = f"Please analyze this resume:\n\n{resume_text.strip()}"
     if job_description.strip():
-        content += f"\n\n---JOB DESCRIPTION---\n{job_description.strip()}"
-        content += "\n\nNOTE: Since a job description is provided, also fill in the job_match section with score, matched_keywords, missing_keywords, and recommendation."
+        content += f"\n\nJob Description to match against:\n{job_description.strip()}"
+        content += "\n\nSince a job description is provided, fill in job_match.score, job_match.matched_keywords, job_match.missing_keywords, and job_match.recommendation."
     return content
 
 
@@ -170,7 +133,6 @@ def _analyze_groq(resume_text: str, job_description: str) -> dict:
             "model":       "llama-3.3-70b-versatile",
             "temperature": 0.3,
             "max_tokens":  4096,
-            "response_format": {"type": "json_object"},
             "messages": [
                 {"role": "system", "content": ANALYSIS_SYSTEM_PROMPT},
                 {"role": "user",   "content": _build_content(resume_text, job_description)},
@@ -183,7 +145,7 @@ def _analyze_groq(resume_text: str, job_description: str) -> dict:
         raise RuntimeError(f"Groq API {resp.status_code}: {resp.text[:400]}")
 
     raw = resp.json()["choices"][0]["message"]["content"]
-    print(f"[ResumeIQ] Groq OK — score in response: {raw[raw.find('overall_score'):raw.find('overall_score')+30]}")
+    print(f"[ResumeIQ] Groq response received, length={len(raw)}")
     return _extract_json(raw)
 
 
@@ -273,17 +235,16 @@ def analyze_resume(resume_text: str, job_description: str = "") -> dict:
     else:
         raise ValueError(f"Unknown AI_PROVIDER='{provider}'. Use: groq | gemini | openrouter")
 
-    # Validate and clamp scores to prevent hallucinated values
+    # Validate and clamp score
     score = result.get("overall_score", 0)
-    if not isinstance(score, int) or score < 0 or score > 100:
-        try:
-            score = max(0, min(100, int(score)))
-            result["overall_score"] = score
-        except Exception:
-            result["overall_score"] = 50
+    try:
+        score = max(0, min(100, int(score)))
+    except Exception:
+        score = 50
+    result["overall_score"] = score
 
     # Recalculate grade from actual score
-    s = result["overall_score"]
+    s = score
     if   s >= 95: result["grade"] = "A+"
     elif s >= 90: result["grade"] = "A"
     elif s >= 85: result["grade"] = "A-"
